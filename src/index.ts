@@ -31,6 +31,11 @@
         + Code refactor
         + New Win effect
         + Finished Readme.md
+
+    ChangeLog 23-06-2024 20:00
+        + Removed hardcoded numbers
+        + Code Reuse
+        + Finish Gameplay GIF
     
 */
 
@@ -121,11 +126,10 @@ function getTextureName(texturePath: string | undefined): string | null {
 function validateLines(symbolNames: (string | null)[]): boolean {
     const wild = "Wild";
     let firstSymbol: string | null = null;
-    let wildCount = 0;
 
     for (const symbol of symbolNames) {
         if (symbol === wild) {
-            wildCount++;
+            continue;
         } else if (firstSymbol === null) {
             firstSymbol = symbol;
         } else if (symbol !== firstSymbol) {
@@ -282,7 +286,7 @@ class SlotGame {
             rc.filters = [reel.blur];
 
             for (let j = 0; j < REEL_MAX_ROWS; j++) {
-                const symbol = this.createSymbol();
+                const symbol = this.createOrUpdateSymbol();
                 symbol.sprite.y = j * SYMBOL_SIZE;
                 reel.symbols.push(symbol);
                 rc.addChild(symbol.sprite);
@@ -294,11 +298,15 @@ class SlotGame {
         this.reelContainer.position.set(DESIGN_WIDTH * 0.36, DESIGN_HEIGHT * 0.20);
     }
 
-     // Create a single symbol
-     private createSymbol(): Symbol {
+    // Create or update a single symbol
+    private createOrUpdateSymbol(sprite?: Sprite): Symbol {
         const randomTextureIndex = Math.floor(Math.random() * this.slotTextures.length);
-        const sprite = new Sprite(this.slotTextures[randomTextureIndex]);
-        sprite.scale.set(Math.min(SYMBOL_SIZE / sprite.width, SYMBOL_SIZE / sprite.height));
+        if (!sprite) {
+            sprite = new Sprite(this.slotTextures[randomTextureIndex]);
+        } else {
+            sprite.texture = this.slotTextures[randomTextureIndex];
+        }
+        sprite.scale.set(Math.min(SYMBOL_SIZE / sprite.texture.width, SYMBOL_SIZE / sprite.texture.height));
         sprite.x = Math.round((SYMBOL_SIZE - sprite.width) / 2);
         return { sprite };
     }
@@ -369,9 +377,9 @@ class SlotGame {
     private animateWinningLine(row: number): void {
         for (let i = 0; i < REEL_MAX_COLS; i++) {
             const { position } = this.reels[i];
-            let index = (row - Math.round(position)) % 5;
+            let index = (row - Math.round(position)) % REEL_MAX_ROWS;
             if (index < 0) {
-                index += 5;
+                index += REEL_MAX_ROWS;
             }
             const symbol = this.reels[i].symbols[index].sprite;
 
@@ -470,14 +478,15 @@ class SlotGame {
     // Function to be called when the reels finish spinning
     private reelsComplete(): void {
         running = false;
+        // Will not consider the first line and last line, they are only for player viewing and not for win calculations
         for (let row = 1; row < 4; row++) {
             const symbolNames: (string | null)[] = [];
 
             for (let i = 0; i < this.reels.length; i++) {
                 const { position } = this.reels[i];
-                let index = (row - Math.round(position)) % 5;
+                let index = (row - Math.round(position)) % REEL_MAX_ROWS;
                 if (index < 0) {
-                    index += 5;
+                    index += REEL_MAX_ROWS;
                 }
                 symbolNames.push(getTextureName(this.reels[i].symbols[index].sprite.texture.label));
             }
@@ -497,10 +506,29 @@ class SlotGame {
         }
         this.activeTweens = []; // Clear the active tweens list
 
+        // Remove Tints and set alpha back to 1
         for (const reel of this.reels) {
             for (const symbol of reel.symbols) {
                 symbol.sprite.alpha = 1;
                 symbol.sprite.tint = 0xFFFFFF;
+            }
+        }
+    }
+
+    // Function to update reels while spining
+    private updateReels():void{
+        for (const reel of this.reels) {
+            reel.blur.blurY = (reel.position - reel.previousPosition) * 8;
+            reel.previousPosition = reel.position;
+
+            // Update symbol positions
+            for (let j = 0; j < reel.symbols.length; j++) {
+                const symbol = reel.symbols[j];
+                const prevY = symbol.sprite.y;
+                symbol.sprite.y = ((reel.position + j) % reel.symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE;
+                if (symbol.sprite.y < 0 && prevY > SYMBOL_SIZE) {
+                    this.createOrUpdateSymbol(symbol.sprite);
+                }
             }
         }
     }
@@ -530,22 +558,7 @@ class SlotGame {
             TWEEN.update();
 
             // Update reels
-            for (const reel of this.reels) {
-                reel.blur.blurY = (reel.position - reel.previousPosition) * 8;
-                reel.previousPosition = reel.position;
-
-                // Update symbol positions
-                for (let j = 0; j < reel.symbols.length; j++) {
-                    const symbol = reel.symbols[j];
-                    const prevY = symbol.sprite.y;
-                    symbol.sprite.y = ((reel.position + j) % reel.symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE;
-                    if (symbol.sprite.y < 0 && prevY > SYMBOL_SIZE) {
-                        symbol.sprite.texture = this.slotTextures[Math.floor(Math.random() * this.slotTextures.length)];
-                        symbol.sprite.scale.set(Math.min(SYMBOL_SIZE / symbol.sprite.texture.width, SYMBOL_SIZE / symbol.sprite.texture.height));
-                        symbol.sprite.x = Math.round((SYMBOL_SIZE - symbol.sprite.width) / 2);
-                    }
-                }
-            }
+            this.updateReels();
         });
     }
 }
