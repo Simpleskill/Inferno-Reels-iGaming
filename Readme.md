@@ -1,6 +1,6 @@
 # Inferno Reels Slot Game
 
-![Gameplay GIF](https://github.com/Simpleskill/Inferno-Reels-iGaming/tree/main/static/InfernoReelsSpinClip.gif)
+![Gameplay GIF](https://github.com/Simpleskill/Inferno-Reels-iGaming/blob/8e7feb4ea392fc4cf08a073cfe2f6c9997696689/static/InfernoReelsSpinClip.gif)
 
 ## Project Overview
 Inferno Reels is a slot game developed using PixiJS, Webpack, TypeScript and TweenJS. This game features a 3x3 grid slot machine with engaging animations and a responsive design to provide a seamless gaming experience across various devices.
