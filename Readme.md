@@ -66,7 +66,7 @@ To run this project locally, follow these steps:
 For any inquiries or feedback, please contact:
 
 - **Author**: André Castro
-- **Email**: [andre.castro@example.com](mailto:andre.castro@example.com)
+- **Email**: [andrefcastro1@hotmail.com](mailto:andrefcastro1@hotmail.com)
 - **LinkedIn**: [André Castro](https://www.linkedin.com/in/andre-castro)
 
 
