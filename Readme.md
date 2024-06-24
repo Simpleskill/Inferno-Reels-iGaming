@@ -67,7 +67,8 @@ For any inquiries or feedback, please contact:
 
 - **Author**: André Castro
 - **Email**: [andrefcastro1@hotmail.com](mailto:andrefcastro1@hotmail.com)
-- **LinkedIn**: [André Castro](https://www.linkedin.com/in/andre-castro)
+- **LinkedIn**: [André Castro](https://www.linkedin.com/in/andrefcastro1)
+
 
 
 
