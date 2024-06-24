@@ -1,10 +1,78 @@
-Linkdin https://www.linkedin.com/in/andrefcastro1
+# Inferno Reels Slot Game
 
-Project developed from 21/06/2024 to ~
+## Project Overview
+Inferno Reels is a slot game developed using PixiJS, Webpack, TypeScript and TweenJS. This game features a 3x3 grid slot machine with engaging animations and a responsive design to provide a seamless gaming experience across various devices.
 
-Platform any computer website with resolution of 1280x720p
+## Technologies Used
 
-Pentasia - Senior Game Developer Technical Test
+### PixiJS 8.2
+- **Why PixiJS?**
+  - PixiJS is a powerful 2D rendering library that leverages WebGL and HTML5 Canvas. It provides excellent performance and a robust set of features for developing interactive graphics and games.
+  - **Version 8.2**: The latest version, ensuring we benefit from the most recent improvements and bug fixes.
+  - **Features**: Hardware acceleration, advanced text rendering, and a flexible API make it ideal for game development.
+    - **Letterbox scale (RESPONSIVENESS SYSTEM)**: Letterbox scaling maximizes the game size to fit the screen while maintaining its aspect ratio and centering it, adding black bars where needed
+
+### Webpack 5.2
+- **Why Webpack?**
+  - Webpack is a module bundler that simplifies the process of managing and bundling JavaScript files and assets.
+  - **Ease of Builds**: It automates many build steps, such as transpiling TypeScript, bundling modules, and optimizing the final output for deployment.
+  - **Features**: Code splitting, hot module replacement, and extensive plugin system enhance the development workflow.
+
+### TypeScript 5.2
+- **Why TypeScript?**
+  - TypeScript is a statically typed superset of JavaScript that adds optional static types, interfaces, and other features to improve code quality and maintainability.
+  - **Version 5.2**: Provides the latest language features and type-checking capabilities, ensuring robust and error-free code.
+  - **Benefits**: Enhanced IDE support, better code refactoring, and early detection of potential bugs.
+
+### Tween.js 23.1.2
+- **Why Tween.js?**
+  - Tween.js is a simple but powerful tweening engine that allows you to create smooth animations by interpolating numeric properties over time.
+  - **Version 23.1.2**: Ensures compatibility with the latest features and improvements.
+  - **Features**: 
+    - **Ease of Use**: Tween.js provides a straightforward API for creating animations.
+    - **Custom Easing Functions**: You can define custom easing functions to control the speed and acceleration of animations.
+    - **Chaining Tweens**: Allows for complex animation sequences by chaining multiple tweens together.
+  - **Usage in Inferno Reels**:
+    - **Reel Animations**: Smoothly animate the position and blur of the slot machine reels.
+    - **Winning Line Effects**: Create pulsing effects on winning lines to enhance visual feedback for players.
+    - **Generic Tweening**: Used for various UI and game element animations to improve the overall user experience.
+
+## Installation and Setup
+To run this project locally, follow these steps:
+
+1. **Clone the Repository**:
+   ```sh
+   git clone https://github.com/Simpleskill/Inferno-Reels-iGaming.git
+   cd Inferno-Reels-iGaming
+
+    Install Dependencies:
+        npm install
+
+    Run project:
+        npm run start
+
+    Open the website:
+        http://localhost:1234/
+    ```
+
+
+## Features
+- **Responsive Design**: Ensures the game works seamlessly on mobile and desktop devices.
+- **Tween Animations**: Smooth animations for reels and symbols using TWEEN.js.
+- **Modular Code**: Clean and maintainable code structure with TypeScript and modular design.
+
+
+## Contact
+For any inquiries or feedback, please contact:
+
+- **Author**: André Castro
+- **Email**: [andre.castro@example.com](mailto:andre.castro@example.com)
+- **LinkedIn**: [André Castro](https://www.linkedin.com/in/andre-castro)
+
+
+
+
+
 
 
 ***************************************************
@@ -74,11 +142,10 @@ A link to the git repository or some other code sharing platform showing your co
 
 ----------------------------------------------------
 
-***************************************************
-                  Details
-***************************************************
+# DETAILS
 
-Dependencies:
+
+**Dependencies**
 
     "pixi.js": "8.2.0",
     "parcel-bundler": "^1.6.1",
@@ -96,10 +163,11 @@ Dependencies:
     "webpack-dev-server": "^4.11.1"
     
 
-
-Art:
+**Art**
 
     Generated using Midjourney AI
-
     Assets edited in photoshop
+
+
+
     

@@ -17,9 +17,9 @@
         + Base version of the game
         + First version of AI Generated ART
 
-    ChangeLog 23-06-2024 Morning
+    ChangeLog 23-06-2024 12:00
         + Win validation
-        + Implementing Letterbox for responsiveness
+        + Implementing Letterbox scale for responsiveness
         + Implementing mask for the game scene
         + Art Improvement using Photoshop
     
@@ -27,6 +27,10 @@
         + Code refactor
         + Comments
 
+    ChangeLog 23-06-2024 18:00
+        + Code refactor
+        + New Win effect
+        + Finished Readme.md
     
 */
 
@@ -39,8 +43,9 @@ import {
     Graphics,
     Text,
     TextStyle,
-    BlurFilter,
+    BlurFilter
 } from 'pixi.js';
+import * as TWEEN from '@tweenjs/tween.js';
 
 // Interfaces for defining structure of reels, symbols, and tweens
 interface Reel {
@@ -131,6 +136,7 @@ function validateLines(symbolNames: (string | null)[]): boolean {
     return true;
 }
 
+
 // Main Game Class
 class SlotGame {
     private app!: Application;
@@ -138,6 +144,7 @@ class SlotGame {
     private slotTextures!: Texture[];
     private rootContainer!: Container;
     private reelContainer = new Container();
+    private activeTweens: TWEEN.Tween<any>[] = [];
 
     constructor() {
         // Initialize the application and load assets
@@ -202,6 +209,7 @@ class SlotGame {
                 'Background.png',
                 'Logo.png',
                 'CompanyLogo.png',
+                'Coin.png',
                 'Symbols/Wild.png',
                 'Symbols/Cerberus.png',
                 'Symbols/Trident.png',
@@ -227,7 +235,7 @@ class SlotGame {
         this.createReels();
         this.addMask();
         this.addSpinButton();
-        this.setupTicker();
+        this.setupTicker();   
     }
 
     // Add the background image to the game
@@ -356,6 +364,109 @@ class SlotGame {
         }
     }
 
+
+    // Function to animate the winning line with the specified effect
+    private animateWinningLine(row: number): void {
+        for (let i = 0; i < REEL_MAX_COLS; i++) {
+            const { position } = this.reels[i];
+            let index = (row - Math.round(position)) % 5;
+            if (index < 0) {
+                index += 5;
+            }
+            const symbol = this.reels[i].symbols[index].sprite;
+
+            // Start the pulse animation loop
+            this.startPulseAnimation(symbol);
+        }
+    }
+
+    // Function to start the pulse animation loop
+    private startPulseAnimation(symbol: Sprite): void {
+        const greenDuration = 500; // Duration to stay green in milliseconds
+        const whiteDuration = 250; // Duration to stay white in milliseconds
+        const fadeOutDuration = 1000; // Duration to fade out in milliseconds
+        const fadeInDuration = 1000; // Duration to fade in in milliseconds
+
+        this.changeToGreen(symbol, greenDuration, whiteDuration, fadeOutDuration, fadeInDuration);
+    }
+
+    // Function to change the symbol to green
+    private changeToGreen(symbol: Sprite, greenDuration: number, whiteDuration: number, fadeOutDuration: number, fadeInDuration: number): void {
+        const changeToGreenTween = new TWEEN.Tween(symbol)
+            .to({ tint: 0x00ff00 }, 0)
+            .easing(TWEEN.Easing.Linear.None)
+            .onComplete(() => {
+                this.stayGreen(symbol, greenDuration, whiteDuration, fadeOutDuration, fadeInDuration);
+            })
+            .start();
+
+        this.activeTweens.push(changeToGreenTween);
+    }
+
+    // Function to keep the symbol green for a duration
+    private stayGreen(symbol: Sprite, greenDuration: number, whiteDuration: number, fadeOutDuration: number, fadeInDuration: number): void {
+        const stayGreenTween = new TWEEN.Tween(symbol)
+            .to({}, greenDuration)
+            .onComplete(() => {
+                this.changeToWhite(symbol, whiteDuration, fadeOutDuration, fadeInDuration);
+            })
+            .start();
+
+        this.activeTweens.push(stayGreenTween);
+    }
+
+    // Function to change the symbol back to white
+    private changeToWhite(symbol: Sprite, whiteDuration: number, fadeOutDuration: number, fadeInDuration: number): void {
+        const changeToWhiteTween = new TWEEN.Tween(symbol)
+            .to({ tint: 0xffffff }, 0)
+            .easing(TWEEN.Easing.Linear.None)
+            .onComplete(() => {
+                this.stayWhite(symbol, whiteDuration, fadeOutDuration, fadeInDuration);
+            })
+            .start();
+
+        this.activeTweens.push(changeToWhiteTween);
+    }
+
+    // Function to keep the symbol white for a duration
+    private stayWhite(symbol: Sprite, whiteDuration: number, fadeOutDuration: number, fadeInDuration: number): void {
+        const stayWhiteTween = new TWEEN.Tween(symbol)
+            .to({}, whiteDuration)
+            .onComplete(() => {
+                this.fadeOut(symbol, fadeOutDuration, fadeInDuration);
+            })
+            .start();
+
+        this.activeTweens.push(stayWhiteTween);
+    }
+
+    // Function to fade out the symbol
+    private fadeOut(symbol: Sprite, fadeOutDuration: number, fadeInDuration: number): void {
+        const fadeOutTween = new TWEEN.Tween(symbol)
+            .to({ alpha: 0.5 }, fadeOutDuration)
+            .easing(TWEEN.Easing.Quadratic.In)
+            .onComplete(() => {
+                this.fadeIn(symbol, fadeInDuration);
+            })
+            .start();
+
+        this.activeTweens.push(fadeOutTween);
+    }
+
+    // Function to fade in the symbol
+    private fadeIn(symbol: Sprite, fadeInDuration: number): void {
+        const fadeInTween = new TWEEN.Tween(symbol)
+            .to({ alpha: 1 }, fadeInDuration)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .onComplete(() => {
+                this.startPulseAnimation(symbol); // Loop the pulse
+            })
+            .start();
+
+        this.activeTweens.push(fadeInTween);
+    }
+
+
     // Function to be called when the reels finish spinning
     private reelsComplete(): void {
         running = false;
@@ -373,28 +484,22 @@ class SlotGame {
 
             console.log("Row " + row);
             if (validateLines(symbolNames)) {
-                this.winRow(row);
+                this.animateWinningLine(row);
             }
         }
     }
 
-    // Highlight the winning row by changing the tint color
-    private winRow(row: number): void {
-        console.log("Won at line: " + row);
-        for (let i = 0; i < REEL_MAX_COLS; i++) {
-            const { position } = this.reels[i];
-            let index = (row - Math.round(position)) % 5;
-            if (index < 0) {
-                index += 5;
-            }
-            this.reels[i].symbols[index].sprite.tint = 0xff0000;
-        }
-    }
-
-    // Reset all symbols to their original tint color
+    // Clean highlighted reels and stop animations
     private cleanReels(): void {
+        // Stop all active tweens
+        for (const tween of this.activeTweens) {
+            tween.stop();
+        }
+        this.activeTweens = []; // Clear the active tweens list
+
         for (const reel of this.reels) {
             for (const symbol of reel.symbols) {
+                symbol.sprite.alpha = 1;
                 symbol.sprite.tint = 0xFFFFFF;
             }
         }
@@ -420,6 +525,9 @@ class SlotGame {
             for (const t of remove) {
                 tweening.splice(tweening.indexOf(t), 1);
             }
+
+            // Update TWEEN.js animations
+            TWEEN.update();
 
             // Update reels
             for (const reel of this.reels) {
