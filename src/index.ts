@@ -17,22 +17,22 @@
         + Base version of the game
         + First version of AI Generated ART
 
-    ChangeLog 23-06-2024 12:00
+    ChangeLog 24-06-2024 12:00
         + Win validation
         + Implementing Letterbox scale for responsiveness
         + Implementing mask for the game scene
         + Art Improvement using Photoshop
     
-    ChangeLog 23-06-2024 16:00
+    ChangeLog 24-06-2024 16:00
         + Code refactor
         + Comments
 
-    ChangeLog 23-06-2024 18:00
+    ChangeLog 24-06-2024 18:00
         + Code refactor
         + New Win effect
         + Finished Readme.md
 
-    ChangeLog 23-06-2024 20:00
+    ChangeLog 24-06-2024 20:00
         + Removed hardcoded numbers
         + Code Reuse
         + Finish Gameplay GIF
