@@ -8,7 +8,7 @@ Pentasia - Senior Game Developer Technical Test
 
 
 ***************************************************
- THE TEST
+                    THE TEST
 ***************************************************
 
 
@@ -78,53 +78,28 @@ A link to the git repository or some other code sharing platform showing your co
                   Details
 ***************************************************
 
-Chests chances:
-
-    30% Empty
-
-    60% Reward (Blue gems)
-
-    10% Bonus    (Red gems)
-
-
-Game restarts:
-
-    after 1,5 seconds
-
 Dependencies:
 
-    "@pixi/sound": "^5.1.1",
-
-    "pixi.js": "^7.1.2",
-
-    "tweedle.js": "^2.0.1",
-
-    "copy-webpack-plugin": "^11.0.0",  
-
-    "html-webpack-plugin": "^5.5.0", 
-
-    "npm-run-all": "^4.1.5",   
-
-     "rimraf": "^4.1.1",    
-
-    "terser-webpack-plugin": "^5.3.6",  
-
-    "ts-loader": "^9.4.2",    
-
-     "typescript": "^4.9.5",  
-
-    "webpack": "^5.75.0",   
-
-    "webpack-cli": "^5.0.1",  
-
+    "pixi.js": "8.2.0",
+    "parcel-bundler": "^1.6.1",
+    "@babel/core": "^7.21.3",
+    "@babel/plugin-proposal-class-properties": "^7.10.1",
+    "copy-webpack-plugin": "^11.0.0",
+    "html-webpack-plugin": "^5.5.0",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^4.1.1",
+    "terser-webpack-plugin": "^5.3.6",
+    "ts-loader": "^9.4.2",
+    "typescript": "^5.5.2",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^4.11.1"
+    
 
 
-Art / Music:
+Art:
 
     Generated using Midjourney AI
 
     Assets edited in photoshop
-
-    https://freesound.org/
     

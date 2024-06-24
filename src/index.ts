@@ -1,3 +1,29 @@
+/*
+    ProjectName :   Inferno Reels
+    Author      :   André Castro
+    Date        :   24/06/2024
+    Description :   A slot game using PixiJS with 3x3 grid
+    Versions    :   PixiJS v8
+    GIT         :   https://github.com/Simpleskill/Inferno-Reels-iGaming
+
+    **** References used ****
+        - https://pixijs.com/8.x/guides/migrations/v8
+        - https://pixijs.com/8.x/examples/masks/graphics
+        - https://www.pixijselementals.com/#letterbox-scale
+    
+
+    **** CHANGELOGS ****
+    ChangeLog 21-06-2024
+        + Base version of the game
+        + First version of AI Generated ART
+
+    ChangeLog 23-06-2024
+        + Win validation
+        + Implementing Letterbox for responsiveness
+        + Implementing mask for the game scene
+        + Art Improvement using Photoshop
+*/
+
 import {
     Application,
     Assets,
@@ -11,86 +37,160 @@ import {
     //Color,
 } from 'pixi.js';
 
-// Definindo a interface Reel
+
+
+// **************************************************************/
+// ********************  Interfaces  ****************************/
+// **************************************************************/
+
+// Reel Interface
 interface Reel {
     container: Container;
-    symbols: Sprite[];
+    symbols: Symbol[];
     position: number;
     previousPosition: number;
     blur: BlurFilter;
 }
 
+// Symbol Interface
+interface Symbol {
+    sprite: Sprite;
+}
+
+// Tween Interface
+interface Tween {
+    object: any;
+    property: string;
+    propertyBeginValue: number;
+    target: number;
+    easing: (t: number) => number;
+    time: number;
+    change?: (tween: Tween) => void;
+    complete?: (tween: Tween) => void;
+    start: number;
+}
+
+const tweening: Tween[] = [];
+
 (async () => {
-    // Criar uma nova aplicação
+    // Create a new App
     const app = new Application();
         
-    // Inicializar a aplicação
+    // App initialization
     await app.init({
-        backgroundColor: "#A183DE",
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
         resizeTo: window,
-        antialias: true, 
+        autoDensity: true,        
+        width: window.innerWidth,
         height: window.innerHeight,
-        width: window.innerWidth
-        //view: document.createElement('canvas') 
+        backgroundAlpha: 0,
+        resolution: window.devicePixelRatio || 1,
+        antialias: true
     });
 
-    //app.stage.sortableChildren = true;
+    // Append canvas to HTML Document Body
+    document.body.appendChild(app.canvas);
 
-/* ************ BACKGROUND ******************  */
-    // Carregar as texturas
+    // **************************************************************/
+    // ***** Letterbox system implementation for responsiveness *****/
+    // **************************************************************/
+    const rootContainer = app.stage.addChild(new Container());
+
+    // Set the design width & height to calculate ratio
+    const DESIGN_WIDTH = 1280;
+    const DESIGN_HEIGHT = 720;
+
+    // Function handling resize impacts on design/aspect ratio
+    function OnResize () {
+        const designRatio = DESIGN_WIDTH / DESIGN_HEIGHT;
+        const aspectRatio = window.innerWidth / window.innerHeight;
+
+        if (aspectRatio < designRatio) {
+            rootContainer.scale.set(window.innerWidth / DESIGN_WIDTH);
+        } else {
+            rootContainer.scale.set(window.innerHeight / DESIGN_HEIGHT);
+        }
+
+        rootContainer.position.set(
+            (window.innerWidth - DESIGN_WIDTH * rootContainer.scale.x) * 0.5,
+            (window.innerHeight - DESIGN_HEIGHT * rootContainer.scale.y) * 0.5
+        );
+    }
+
+    // Everytime screen resize will run the function OnResize
+    window.addEventListener('resize', OnResize);
+
+    // Run OnResize function when game starts
+    OnResize();
+
+    // **************************************************************/
+    // *********************   Visual Assets   **********************/
+    // **************************************************************/
+    // Load Textures
     await Assets.load([
-        'Background.png'
+        'Background.png',
+        'Logo.png',
+        'CompanyLogo.png'
     ]);
+
+    // Add Background
     const backgroundText: Texture = Texture.from('Background.png');
-
-
     const background: Sprite = new Sprite(backgroundText);
     background.anchor.set(0.5);
-    background.x = window.innerWidth/2;
-    background.y = window.innerHeight/2;
-    background.width = window.innerWidth;
-    background.height = window.innerHeight;
+    background.x = DESIGN_WIDTH/2;
+    background.y = DESIGN_HEIGHT/2;
+    background.width = DESIGN_WIDTH;
+    background.height = DESIGN_HEIGHT;
+    rootContainer.addChild(background);
 
-    app.stage.addChild(background);
+    // Add GameLogo
+    const GameLogoText: Texture = Texture.from('Logo.png');
+    const gameLogo: Sprite = new Sprite(GameLogoText);
+    gameLogo.width = DESIGN_WIDTH*0.25;
+    gameLogo.height = DESIGN_HEIGHT*0.25;
+    rootContainer.addChild(gameLogo);  
 
-    // Adicionar o canvas da aplicação ao div com id 'pixi-content'
-    document.body.appendChild(app.canvas);
-    // const pixiContent = document.getElementById('pixi-content');
-    // if (pixiContent) {
-    //     pixiContent.appendChild(app.view);
-    // } else {
-    //     console.error('Elemento com ID "pixi-content" não encontrado.');
-    // }
+    // Add CompanyLogo
+    const companyLogoText: Texture = Texture.from('CompanyLogo.png');
+    const companyLogo: Sprite = new Sprite(companyLogoText);
+    companyLogo.x = DESIGN_WIDTH *0.79;
+    companyLogo.y = DESIGN_HEIGHT *0.01;
+    companyLogo.width = DESIGN_WIDTH*0.2;
+    companyLogo.height = DESIGN_HEIGHT*0.1;
+    rootContainer.addChild(companyLogo);
 
-    // Carregar as texturas
+
+    // Load Symbols
     await Assets.load([
-        'Wild.png',
-        'Cerberus.png',
-        'Trident.png',
-        'Key.png'
+        'Symbols/Wild.png',
+        'Symbols/Cerberus.png',
+        'Symbols/Trident.png',
+        'Symbols/Key.png'
     ]);
 
-    const REEL_WIDTH = app.screen.width / 9;
-    const SYMBOL_SIZE = app.screen.width / 9;
-    const REEL_MARGIN_Y = app.screen.width /3;
+    const REEL_WIDTH = 115;
+    const SYMBOL_SIZE = 110;
+    const REEL_MARGIN_Y = 0;
+    const REEL_MAX_COLS = 3;
+    const REEL_MAX_ROWS = 5;
 
 
-
-    // Criar diferentes símbolos de slot
+    // Create symbols textures
     const slotTextures: Texture[] = [
-        Texture.from('Wild.png'),
-        Texture.from('Cerberus.png'),
-        Texture.from('Trident.png'),
-        Texture.from('Key.png')
+        Texture.from('Symbols/Wild.png'),
+        Texture.from('Symbols/Cerberus.png'),
+        Texture.from('Symbols/Trident.png'),
+        Texture.from('Symbols/Key.png')
     ];
 
-    // Construir os rolos
+    // Create reels
     const reels: Reel[] = [];
+
+    // Create reels Container
     const reelContainer = new Container();
 
-    for (let i = 0; i < 3; i++) {
+
+    // Create & Draw all symbols
+    for (let i = 0; i < REEL_MAX_COLS; i++) {
         const rc = new Container();
         rc.x = i * REEL_WIDTH;
         reelContainer.addChild(rc);
@@ -107,139 +207,218 @@ interface Reel {
         reel.blur.blurY = 0;
         rc.filters = [reel.blur];
 
-        // Construir os símbolos
-        for (let j = 0; j < 4; j++) {
-            const symbol = new Sprite(slotTextures[Math.floor(Math.random() * slotTextures.length)]);
-            // Dimensionar o símbolo para caber na área do símbolo.
-            symbol.y = j * SYMBOL_SIZE;
-            symbol.scale.x = symbol.scale.y = Math.min(SYMBOL_SIZE / symbol.width, SYMBOL_SIZE / symbol.height);
-            symbol.x = Math.round((SYMBOL_SIZE - symbol.width) / 2 -REEL_MARGIN_Y);
+        // Create Symbols
+        for (let j = 0; j < REEL_MAX_ROWS; j++) {
+            const rNumber = Math.floor(Math.random() * slotTextures.length);
+            
+            const symbol : Symbol  ={
+                sprite: new Sprite(slotTextures[rNumber])
+            }
+            
+            symbol.sprite.scale.x = symbol.sprite.scale.y = Math.min(SYMBOL_SIZE / symbol.sprite.width, SYMBOL_SIZE / symbol.sprite.height);
+            symbol.sprite.x = Math.round((SYMBOL_SIZE - symbol.sprite.width) / 2 -REEL_MARGIN_Y);
+            
             reel.symbols.push(symbol);
-            rc.addChild(symbol);
+            
+            rc.addChild(symbol.sprite);
         }
+        // Apend reel to the array of reels
         reels.push(reel);
     }
-    app.stage.addChild(reelContainer);
 
-    // Construir coberturas superior e inferior e posicionar reelContainer
-    const margin = (app.screen.height - SYMBOL_SIZE * 3) / 2;
+    // Append reelContainer to our screen rootContainer
+    rootContainer.addChild(reelContainer);    
 
-    reelContainer.y = margin;
-    reelContainer.x = Math.round(app.screen.width - REEL_WIDTH * 3);
-    
-    const top = new Graphics()
-    .rect(0, 0, app.screen.width, margin)
-    .fill(0x0);
-    
+
+    reelContainer.x = DESIGN_WIDTH*0.36;
+    reelContainer.y = DESIGN_HEIGHT*0.20;
+    reelContainer.alpha = 1;
     
     const bottom = new Graphics()
-    .rect(0, SYMBOL_SIZE * 3 + margin, app.screen.width, margin)
-    .fill(0x000);
+    .rect(DESIGN_WIDTH * 0.5,DESIGN_HEIGHT *0.7, DESIGN_WIDTH, DESIGN_HEIGHT*0.4);
 
-    // Adicionar texto de jogar
+    // Spin Button
     const style = new TextStyle({
         fontFamily: 'Arial',
         fontSize: 36,
         fontStyle: 'italic',
         fontWeight: 'bold',
-        fill: 0xffffff,  // Define uma cor única ou use um gradiente especial
+        fill: 0xffffff,
         stroke: '#4a1850',
-        //strokeThickness: 5,
         dropShadow: true,
-        //dropShadowColor: '#000000',
-        //dropShadowAngle: Math.PI / 6,
-        //dropShadowBlur: 4,
-        //dropShadowDistance: 6,
         wordWrap: true,
         wordWrapWidth: 440,
     });
 
     const playText = new Text('Spin the wheels!', style);
-    playText.x = Math.round((bottom.width - playText.width) / 2);
-    playText.y = app.screen.height - margin + Math.round((margin - playText.height) / 2);
+    playText.x = DESIGN_WIDTH * 0.38;
+    playText.y = DESIGN_HEIGHT * 0.8;
     bottom.addChild(playText);
+    rootContainer.addChild(bottom);
 
-    // Adicionar texto de cabeçalho
-    const headerText = new Text('INFERNO REELS', style);
-    headerText.x = Math.round((top.width - headerText.width) / 2);
-    headerText.y = Math.round((margin - headerText.height) / 2);
-    top.addChild(headerText);
-
-    app.stage.addChild(top);
-    app.stage.addChild(bottom);
-
-    // Definir a interatividade.
+    // Spin Button Behaviour
     bottom.eventMode = 'static';
     bottom.cursor = 'pointer';
     bottom.addListener('pointerdown', () => {
         startPlay();
     });
 
+    
+    // **************************************************************/
+    // **************************   MASK   **************************/
+    // **************************************************************/
+
+    // Create a graphics object to define our mask
+    let mask = new Graphics()
+    // Add the rectangular area to show
+    .rect(0,0,SYMBOL_SIZE*3+10,SYMBOL_SIZE*3)
+    .fill(0xffffff);
+
+    mask.alpha = 0.5;
+
+    // Set the mask to use our graphics object from above
+    reelContainer.mask = mask;
+
+    // Add the mask as a child, so that the mask is positioned relative to its parent
+    reelContainer.addChild(mask);
+
     let running = false;
 
-    // Função para começar a jogar.
+    // Function to run once the spin is trigger
     function startPlay() {
         if (running) return;
+        CleanReels();
         running = true;
-
         for (let i = 0; i < reels.length; i++) {
             const r = reels[i];
             const extra = Math.floor(Math.random() * 3);
             const target = r.position + 10 + i * 5 + extra;
             const time = 2500 + i * 600 + extra * 600;
-
-            tweenTo(r, 'position', target, time, backout(0.5), undefined, i === reels.length - 1 ? reelsComplete : undefined);
+            tweenTo(r, 'position', target, time, backout(0.7), undefined, i === reels.length - 1 ? reelsComplete : undefined);
 
         }
     }
 
-    // Handler de conclusão dos reels.
+    // Function to validate if there is any connection in the given combination
+    function validateLines(symbolNames: (string | null)[]): boolean {
+        const wild = "Wild";
+        let firstSymbol: string | null = null;
+        let wildCount = 0;
+    
+        for (let i = 0; i < symbolNames.length; i++) {
+            const symbol = symbolNames[i];
+    
+            if (symbol === wild) {
+                wildCount++;
+            } else if (firstSymbol === null) {
+                firstSymbol = symbol;
+            } else if (symbol !== firstSymbol) {
+                return false;
+            }
+        }
+    
+        if (wildCount === symbolNames.length) {
+            return true; // 3 Wilds in a row
+        }
+    
+        if (wildCount > 0 && firstSymbol !== null) {
+            return true; // 1 Wild and 2 equal symbols
+        }
+    
+        return wildCount === 0 && firstSymbol !== null; // All symbols are equals and not wilds
+    }
+
+    // Called after the spin is over
     function reelsComplete() {
         running = false;
+        
+        // Iterate through the 3 middle rows that are being shown to the player
+        for (let rows = 1; rows < 4; rows++) {
+            const symbolNames = [];
+
+            for (let i = 0; i < reels.length; i++) {
+                const { position } = reels[i];
+
+                let index = ((rows - Math.round(position)) % 5);
+                if (index < 0) {
+                    index += 5;
+                }
+                symbolNames.push(GetTextureName(reels[i].symbols[index].sprite.texture.label));
+            }
+            console.log("Row "+ rows);
+            if(validateLines(symbolNames)){
+                WinRow(rows);
+            }
+        }
+        running = false;
+    }
+
+    // Function to highlight the row after a win is detected
+    function WinRow(row:number){
+        console.log("Won at line: "+row);
+        for (let i = 0; i < 3; i++) {
+            const { position } = reels[i];
+
+            let index = ((row - Math.round(position)) % 5);
+            if (index < 0) {
+                index += 5;
+            }
+            reels[i].container.children[index].tint = 0xff0000;
+        }
+    }
+
+    // Clean highlighted reels
+    function CleanReels(){
+        for (let i = 0; i < reels.length; i++) {
+            const r = reels[i];
+            
+            for (let j = 0; j < r.symbols.length; j++) {
+                
+                const sprite = r.symbols[j].sprite;
+                sprite.tint = 0xFFFFFF;
+            }
+        }
+    }
+
+    // Function to return the name of the symbol based on the texturePath
+    function GetTextureName(texturePath: string | undefined) {
+        if (texturePath === undefined || texturePath === null) {
+            return null; // Return null if texturePath equals null or don't exist
+        }
+
+        // Get full texture name
+        const fileName = texturePath.substring(texturePath.lastIndexOf('/') + 1);
+        // Remove extension
+        const nameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
+        return nameWithoutExtension;
     }
 
     // Listen for animate update.
     app.ticker.add(() => {
-        // Atualizar os slots.
+        // Update Reels
         for (let i = 0; i < reels.length; i++) {
             const r = reels[i];
-            // Atualizar a quantidade de filtro de desfoque y com base na velocidade.
-            // Isso seria melhor se calculado também com o tempo em mente. Agora o desfoque depende da taxa de quadros.
-
+            
+            // Update amount of blur based on y velocity
             r.blur.blurY = (r.position - r.previousPosition) * 8;
             r.previousPosition = r.position;
 
-            // Atualizar posições dos símbolos no rolo.
+            // Update Symbols positions at reel
             for (let j = 0; j < r.symbols.length; j++) {
-                const s = r.symbols[j];
-                const prevy = s.y -100;
+                const symb = r.symbols[j];
+                const sprite = symb.sprite;
+                const prevy = sprite.y -100;
 
-                s.y = ((r.position + j) % r.symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE;
-                if (s.y < 0 && prevy > SYMBOL_SIZE) {
-                    // Detectar passagem e trocar a textura.
-                    // Isso deve ser determinado de algum rolo lógico em um produto adequado.
-                    s.texture = slotTextures[Math.floor(Math.random() * slotTextures.length)];
-                    s.scale.x = s.scale.y = Math.min(SYMBOL_SIZE / s.texture.width, SYMBOL_SIZE / s.texture.height);
-                    s.x = Math.round((SYMBOL_SIZE - s.width) / 2 - REEL_MARGIN_Y);
+                sprite.y = ((r.position + j) % r.symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE;
+                if (sprite.y < 0 && prevy > SYMBOL_SIZE) {
+                    // Detect if should change texture
+                    sprite.texture = slotTextures[Math.floor(Math.random() * slotTextures.length)];
+                    sprite.scale.x = sprite.scale.y = Math.min(SYMBOL_SIZE / sprite.texture.width, SYMBOL_SIZE / sprite.texture.height);
+                    sprite.x = Math.round((SYMBOL_SIZE - sprite.width) / 2 - REEL_MARGIN_Y);
                 }
             }
         }
     });
-
-    // Função de interpolação simples. Isso deve ser substituído por uma biblioteca de interpolação adequada em um produto real.
-    interface Tween {
-        object: any;
-        property: string;
-        propertyBeginValue: number;
-        target: number;
-        easing: (t: number) => number;
-        time: number;
-        change?: (tween: Tween) => void;
-        complete?: (tween: Tween) => void;
-        start: number;
-    }
-
-    const tweening: Tween[] = [];
 
     function tweenTo(object: any, property: string, target: number, time: number, easing: (t: number) => number, onchange?: (tween: Tween) => void, oncomplete?: (tween: Tween) => void) {
         const tween: Tween = {
@@ -281,12 +460,12 @@ interface Reel {
         }
     });
 
-    // Função básica de interpolação linear.
+    // Basic linear interpolation function
     function lerp(a1: number, a2: number, t: number): number {
         return a1 * (1 - t) + a2 * t;
     }
 
-    // Função de saída Backout do tweenjs.
+    // Function from tweenjs Backout
     // https://github.com/CreateJS/TweenJS/blob/master/src/tweenjs/Ease.js
     function backout(amount: number): (t: number) => number {
         return (t: number) => --t * t * ((amount + 1) * t + amount) + 1;
